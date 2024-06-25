@@ -56,10 +56,10 @@
         router.get('/', async (req, res) => {
             try {
                 const items = await Item.find();
-                res.render('list.html', { items }); // Utiliza res.render se estiver usando um mecanismo de template como EJS, Handlebars, etc.
+                res.status(200).json(items); // Retorna os itens como JSON
             } catch (err) {
                 console.error('Erro ao recuperar itens:', err);
-                res.status(500).send('Erro ao recuperar itens');
+                res.status(500).json({ message: 'Erro ao recuperar itens' });
             }
         });
 

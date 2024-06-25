@@ -4,16 +4,20 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 const multer = require('multer');
-const itemRoutes = require('./routes/items'); // Importar o router correto
-const Item = require('./models/itemsModel'); // Importar o modelo de Item
+const itemRoutes = require('./routes/items');
 
 dotenv.config();
 
 const app = express();
+exports.app = app;
 
-// Configurações
+// Configuração do Express para usar EJS como engine de template
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Configurações adicionais
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public'))); // Servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Conexão com o banco de dados
 const connectDB = async () => {
@@ -28,6 +32,12 @@ const connectDB = async () => {
 
 connectDB();
 
+// Middleware para tratamento de erros
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Algo deu errado!');
+});
+
 // Configuração do Multer para upload de imagens
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -39,7 +49,6 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    // Aceita apenas arquivos de imagem
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
     } else {
@@ -48,6 +57,23 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+// Rotas
+app.use('/items', itemRoutes);
+
+// Rota inicial para a página de itens
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+// Rota para exibir formulário de adicionar item
+app.get('/add', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'add-item.html'));
+});
+
+app.get('/list', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'list.html'));
+});
 
 // Rota para lidar com o envio do formulário de adicionar item
 app.post('/items/add', upload.single('image'), async (req, res) => {
@@ -82,24 +108,6 @@ app.post('/items/add', upload.single('image'), async (req, res) => {
         console.error('Erro ao adicionar item:', error);
         res.status(500).json({ message: 'Erro ao adicionar item' });
     }
-});
-
-// Rotas para itens usando itemRoutes
-app.use('/items', itemRoutes);
-
-// Rota inicial para a página de itens
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'index.html'));
-});
-
-// Rota para listar todos os itens
-app.get('/list', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'list.html'));
-});
-
-// Rota para exibir formulário de adicionar item
-app.get('/add', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'add-item.html'));
 });
 
 // Iniciar o servidor
