@@ -12,6 +12,10 @@ const itemSchema = new mongoose.Schema({
     description: {
         type: String,
         required: true
+    },
+    image: {
+        type: String, // Armazenar a URL da imagem
+        required: true
     }
 });
 
